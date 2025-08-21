@@ -124,25 +124,26 @@ header {
     stroke-width: 2;
 }
 
+/* Dark theme shows sun icon (click to go to light) */
 .sun-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+.moon-icon {
     opacity: 0;
     transform: rotate(180deg) scale(0.8);
 }
 
-.moon-icon {
-    opacity: 1;
-    transform: rotate(0deg) scale(1);
-}
-
-/* Light theme icon states */
+/* Light theme shows moon icon (click to go to dark) */
 [data-theme="light"] .sun-icon {
-    opacity: 1;
-    transform: rotate(0deg) scale(1);
+    opacity: 0;
+    transform: rotate(-180deg) scale(0.8);
 }
 
 [data-theme="light"] .moon-icon {
-    opacity: 0;
-    transform: rotate(-180deg) scale(0.8);
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
 }
 
 /* Theme toggle hover effects */
@@ -150,16 +151,23 @@ header {
     transform: scale(1.1);
 }
 
-[data-theme="light"] .theme-toggle:hover .sun-icon {
+/* Dark theme hover: sun icon scales up */
+.theme-toggle:hover .sun-icon {
     transform: rotate(0deg) scale(1.1);
+}
+
+/* Light theme hover: moon icon scales up */
+[data-theme="light"] .theme-toggle:hover .moon-icon {
+    transform: rotate(0deg) scale(1.1);
+}
+
+/* Maintain hidden state scaling for inactive icons */
+[data-theme="light"] .theme-toggle:hover .sun-icon {
+    transform: rotate(-180deg) scale(0.9);
 }
 
 .theme-toggle:hover .moon-icon {
-    transform: rotate(0deg) scale(1.1);
-}
-
-[data-theme="light"] .theme-toggle:hover .moon-icon {
-    transform: rotate(-180deg) scale(0.9);
+    transform: rotate(180deg) scale(0.9);
 }
 
 /* Main Content Area with Sidebar */
