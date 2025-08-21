@@ -44,12 +44,17 @@ class QueryResponse(BaseModel):
     """Response model for course queries"""
     answer: str
     sources: List[str]
+    source_links: List[Optional[str]]  # Links corresponding to each source
     session_id: str
 
 class CourseStats(BaseModel):
     """Response model for course statistics"""
     total_courses: int
     course_titles: List[str]
+
+class ClearSessionRequest(BaseModel):
+    """Request model for clearing a session"""
+    session_id: str
 
 # API Endpoints
 
@@ -63,11 +68,12 @@ async def query_documents(request: QueryRequest):
             session_id = rag_system.session_manager.create_session()
         
         # Process query using RAG system
-        answer, sources = rag_system.query(request.query, session_id)
+        answer, sources, source_links = rag_system.query(request.query, session_id)
         
         return QueryResponse(
             answer=answer,
             sources=sources,
+            source_links=source_links,
             session_id=session_id
         )
     except Exception as e:
@@ -82,6 +88,15 @@ async def get_course_stats():
             total_courses=analytics["total_courses"],
             course_titles=analytics["course_titles"]
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/session/clear")
+async def clear_session(request: ClearSessionRequest):
+    """Clear a specific session's conversation history"""
+    try:
+        rag_system.session_manager.clear_session(request.session_id)
+        return {"status": "success", "message": f"Session {request.session_id} cleared"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
