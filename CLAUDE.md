@@ -26,6 +26,21 @@ uv sync
 uv run <command>
 ```
 
+### Code Quality Tools
+```bash
+# Auto-format code (black + isort)
+./scripts/format.sh
+
+# Run quality checks (black, isort, flake8, mypy)
+./scripts/quality.sh
+
+# Individual commands
+uv run black backend/           # Format with black
+uv run isort backend/           # Sort imports
+uv run flake8 backend/          # Lint with flake8
+uv run mypy backend/            # Type check with mypy
+```
+
 ### Environment Setup
 - Create `.env` file with `ANTHROPIC_API_KEY=your_key_here`
 - The application requires Python 3.13 or higher
