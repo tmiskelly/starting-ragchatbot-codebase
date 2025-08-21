@@ -1,11 +1,11 @@
 import os
-import sys
-from unittest.mock import MagicMock, Mock, patch
-from fastapi.testclient import TestClient
-import tempfile
 import shutil
+import sys
+import tempfile
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+from fastapi.testclient import TestClient
 
 # Add the backend directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -131,46 +131,44 @@ def ai_generator_with_mock(test_config, mock_anthropic_client):
 def mock_rag_system(test_config):
     """Mock RAG system for API testing"""
     mock_rag = Mock(spec=RAGSystem)
-    
+
     # Mock successful query response
     mock_rag.query.return_value = (
         "This is a test response",
         ["Source 1", "Source 2"],
-        ["http://example.com/lesson/1", "http://example.com/lesson/2"]
+        ["http://example.com/lesson/1", "http://example.com/lesson/2"],
     )
-    
+
     # Mock course analytics
     mock_rag.get_course_analytics.return_value = {
         "total_courses": 2,
-        "course_titles": ["Test Course 1", "Test Course 2"]
+        "course_titles": ["Test Course 1", "Test Course 2"],
     }
-    
+
     # Mock session manager
     mock_session_manager = Mock()
     mock_session_manager.create_session.return_value = "test-session-123"
     mock_session_manager.clear_session.return_value = None
     mock_rag.session_manager = mock_session_manager
-    
+
     return mock_rag
 
 
 @pytest.fixture
 def test_app(mock_rag_system):
     """FastAPI test app with mocked dependencies and no static files"""
+    from typing import List, Optional
+
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.middleware.trustedhost import TrustedHostMiddleware
     from pydantic import BaseModel
-    from typing import List, Optional
-    
+
     # Create minimal test app without static file mounting
     app = FastAPI(title="Course Materials RAG System - Test", root_path="")
-    
+
     # Add middleware
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=["*"]
-    )
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -179,7 +177,7 @@ def test_app(mock_rag_system):
         allow_headers=["*"],
         expose_headers=["*"],
     )
-    
+
     # Request/Response models
     class QueryRequest(BaseModel):
         query: str
@@ -197,23 +195,26 @@ def test_app(mock_rag_system):
 
     class ClearSessionRequest(BaseModel):
         session_id: str
-    
+
     # API endpoints
     @app.post("/api/query", response_model=QueryResponse)
     async def query_documents(request: QueryRequest):
         from fastapi import HTTPException
+
         try:
             session_id = request.session_id
             if not session_id:
                 session_id = mock_rag_system.session_manager.create_session()
-            
-            answer, sources, source_links = mock_rag_system.query(request.query, session_id)
-            
+
+            answer, sources, source_links = mock_rag_system.query(
+                request.query, session_id
+            )
+
             return QueryResponse(
                 answer=answer,
                 sources=sources,
                 source_links=source_links,
-                session_id=session_id
+                session_id=session_id,
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -221,11 +222,12 @@ def test_app(mock_rag_system):
     @app.get("/api/courses", response_model=CourseStats)
     async def get_course_stats():
         from fastapi import HTTPException
+
         try:
             analytics = mock_rag_system.get_course_analytics()
             return CourseStats(
                 total_courses=analytics["total_courses"],
-                course_titles=analytics["course_titles"]
+                course_titles=analytics["course_titles"],
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -233,12 +235,16 @@ def test_app(mock_rag_system):
     @app.post("/api/session/clear")
     async def clear_session(request: ClearSessionRequest):
         from fastapi import HTTPException
+
         try:
             mock_rag_system.session_manager.clear_session(request.session_id)
-            return {"status": "success", "message": f"Session {request.session_id} cleared"}
+            return {
+                "status": "success",
+                "message": f"Session {request.session_id} cleared",
+            }
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-    
+
     return app
 
 
